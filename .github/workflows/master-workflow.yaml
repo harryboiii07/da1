@@ -1,20 +1,16 @@
-name: Master Workflow
+name: Master Prod Workflow
 
 on:
   workflow_dispatch:
     inputs:
       bu:
-        description: 'Select BU(s) to trigger'
+        description: 'Select the BU(s) to trigger'
         required: true
         type: choice
         options:
           - b1
           - b2
           - both
-      consumers:
-        description: 'Enter consumers to trigger (comma-separated)'
-        required: true
-        default: ''
 
 jobs:
   parse-and-trigger:
@@ -23,96 +19,57 @@ jobs:
       - name: Define Workflow Mapping
         id: define-mapping
         run: |
-          echo "b1=b1-s1.yaml" >> bu_mapping.txt
-          echo "b2=b2-s1.yaml" >> bu_mapping.txt
-          echo "b1c1=b1-c1.yaml" >> consumer_mapping.txt
-          echo "b1c2=b1-c2.yaml" >> consumer_mapping.txt
-          echo "b2c1=b2-c1.yaml" >> consumer_mapping.txt
-          echo "b2c2=b2-c2.yaml" >> consumer_mapping.txt
+          # Hardcoded mapping of BUs to workflow filenames
+          echo "b1=b1-s1.yaml" >> mapping.txt
+          echo "b1c1=b1-c1.yaml" >> mapping.txt
+          echo "b2=b2-s1.yaml" >> mapping.txt
+          echo "b2c1=b2-c1.yaml" >> mapping.txt
 
-      - name: Parse BU and Consumer Inputs
-        id: parse-inputs
+      - name: Parse BU Input
+        id: parse-input
         run: |
           echo "Selected BU: ${{ github.event.inputs.bu }}"
-          echo "Selected Consumers: ${{ github.event.inputs.consumers }}"
-          BUs="${{ github.event.inputs.bu }}"
-          CONSUMERS="${{ github.event.inputs.consumers }}"
+          echo "${{ github.event.inputs.bu }}" > selected_bu.txt
 
-          # Parse BU input
-          IFS=',' read -ra bu_array <<< "$BUs"
-
-          # Parse Consumer input
-          IFS=',' read -ra consumer_array <<< "$CONSUMERS"
-
-          # Clear files to avoid stale data
-          > bu_list.txt
-          > consumer_list.txt
-
-          for bu in "${bu_array[@]}"; do
-            echo "$bu" >> bu_list.txt
-          done
-
-          for consumer in "${consumer_array[@]}"; do
-            echo "$consumer" >> consumer_list.txt
-          done
-
-      - name: Trigger BU and Consumer Workflows
+      - name: Trigger Workflows Based on Selection
         uses: actions/github-script@v6
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
             const fs = require('fs');
 
-            // Retrieve inputs
-            const buInput = fs.readFileSync('bu_list.txt', 'utf8').split('\n').filter(line => line.trim());
-            const consumerInput = fs.readFileSync('consumer_list.txt', 'utf8').split('\n').filter(line => line.trim());
+            // Read the selected service from input
+            const selectedBu = fs.readFileSync('selected_bu.txt', 'utf8').trim();
 
-            // Load BU and Consumer mappings
-            const buMappings = {};
-            const consumerMappings = {};
-            
-            fs.readFileSync('bu_mapping.txt', 'utf8').split('\n').filter(line => line.trim()).forEach(line => {
+            // Read workflow mappings
+            const mappings = {};
+            const mappingLines = fs.readFileSync('mapping.txt', 'utf8').split('\n').filter(line => line.trim());
+            mappingLines.forEach(line => {
               const [key, value] = line.split('=');
-              buMappings[key.trim()] = value.trim();
+              mappings[key.trim()] = value.trim();
             });
 
-            fs.readFileSync('consumer_mapping.txt', 'utf8').split('\n').filter(line => line.trim()).forEach(line => {
-              const [key, value] = line.split('=');
-              consumerMappings[key.trim()] = value.trim();
-            });
+            // Define workflows to trigger based on input
+            const workflowsToTrigger = [];
+            if (selectedBu === 'b1' || selectedBu === 'both') {
+              workflowsToTrigger.push(mappings['b1s1'], mappings['b1c1']);
+            }
+            if (selectedBu === 'b2' || selectedBu === 'both') {
+              workflowsToTrigger.push(mappings['b2s1'], mappings['b2c1']);
+            }
 
-            // Trigger BU workflows
-            const buPromises = buInput.map(async (bu) => {
-              const workflowFile = buMappings[bu];
-              if (!workflowFile) {
-                console.log(`No workflow mapping found for BU: ${bu}`);
-                return;
-              }
-
-              console.log(`Triggering BU workflow: ${workflowFile}`);
+            // Trigger workflows in parallel
+            const branch = 'main'; // Adjust this if branch input is needed
+            const promises = workflowsToTrigger.map(workflowFile => {
+              console.log(`Triggering workflow: ${workflowFile}`);
               return github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: workflowFile,
-                ref: 'main', // Default branch or a specific branch
+                ref: branch,
               });
             });
 
-            // Trigger Consumer workflows
-            const consumerPromises = consumerInput.map(async (consumer) => {
-              const workflowFile = consumerMappings[consumer];
-              if (!workflowFile) {
-                console.log(`No workflow mapping found for Consumer: ${consumer}`);
-                return;
-              }
-
-              console.log(`Triggering Consumer workflow: ${workflowFile}`);
-              return github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflowFile,
-                ref: 'main',
-              });
-            });
-
-            await Promise.all([...buPromises, ...consumerPromises]);
+            // Wait for all workflows to be dispatched
+            await Promise.all(promises);
+            console.log('All workflows triggered successfully.');
