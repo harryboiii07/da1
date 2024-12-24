@@ -1,4 +1,4 @@
-name: Master Prod Workflow
+name: Master Workflow
 
 on:
   workflow_dispatch:
@@ -52,10 +52,10 @@ jobs:
             // Define workflows to trigger based on input
             const workflowsToTrigger = [];
             if (selectedBu === 'b1' || selectedBu === 'both') {
-              workflowsToTrigger.push(mappings['b1s1'], mappings['b1c1']);
+              workflowsToTrigger.push(mappings['b1'], mappings['b1c1']);
             }
             if (selectedBu === 'b2' || selectedBu === 'both') {
-              workflowsToTrigger.push(mappings['b2s1'], mappings['b2c1']);
+              workflowsToTrigger.push(mappings['b2'], mappings['b2c1']);
             }
 
             // Trigger workflows in parallel
