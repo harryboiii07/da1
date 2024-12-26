@@ -19,8 +19,8 @@ on:
         default: 'none'
         type: choice
         options:
-          - b1c1
-          - b2c1
+          - b1 c1
+          - b2 c1
           - both
           - none
 
@@ -33,9 +33,9 @@ jobs:
         run: |
           # Define mappings for BUs and their workflows
           echo "b1=b1-s1.yaml" >> mapping.txt
-          echo "b1c1=b1-c1.yaml" >> mapping.txt
+          echo "b1 c1=b1-c1.yaml" >> mapping.txt
           echo "b2=b2-s1.yaml" >> mapping.txt
-          echo "b2c1=b2-c1.yaml" >> mapping.txt
+          echo "b2 c1=b2-c1.yaml" >> mapping.txt
 
       - name: Save Selected BU and Consumers
         id: save-inputs
@@ -74,11 +74,11 @@ jobs:
             }
 
             // Handle Consumer workflows
-            if (selectedConsumers === 'b1c1' || selectedConsumers === 'both') {
-              workflowsToTrigger.push(mappings['b1c1']);
+            if (selectedConsumers === 'b1 c1' || selectedConsumers === 'both') {
+              workflowsToTrigger.push(mappings['b1 c1']);
             }
-            if (selectedConsumers === 'b2c1' || selectedConsumers === 'both') {
-              workflowsToTrigger.push(mappings['b2c1']);
+            if (selectedConsumers === 'b2 c1' || selectedConsumers === 'both') {
+              workflowsToTrigger.push(mappings['b2 c1']);
             }
 
             // Log workflows to trigger
