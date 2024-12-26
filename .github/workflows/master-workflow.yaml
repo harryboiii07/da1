@@ -32,10 +32,10 @@ jobs:
         id: define-mapping
         run: |
           # Define mappings for BUs and their workflows
-          echo "b1=b1-s1.yml" >> mapping.txt
-          echo "b1c1=b1-c1.yml" >> mapping.txt
-          echo "b2=b2-s1.yml" >> mapping.txt
-          echo "b2c1=b2-c1.yml" >> mapping.txt
+          echo "b1=b1-s1.yaml" >> mapping.txt
+          echo "b1c1=b1-c1.yaml" >> mapping.txt
+          echo "b2=b2-s1.yaml" >> mapping.txt
+          echo "b2c1=b2-c1.yaml" >> mapping.txt
 
       - name: Save Selected BU and Consumers
         id: save-inputs
