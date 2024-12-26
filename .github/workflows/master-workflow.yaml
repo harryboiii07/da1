@@ -5,10 +5,22 @@ on:
     inputs:
       bu:
         description: 'Select BU (e.g., adb, qoala, both, none)'
+        type: choice
+        options:
+          - adb
+          - qoala
+          - both
+          - none
         required: true
         default: 'none'
       consumers:
         description: 'Select Consumers (e.g., b1c1, b2c1, both, none)'
+        type: choice
+        options:
+          - b1c1
+          - b2c1
+          - both
+          - none
         required: true
         default: 'none'
       branch:
