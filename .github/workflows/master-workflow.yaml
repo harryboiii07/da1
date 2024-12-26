@@ -7,22 +7,14 @@ on:
         description: 'Select BU (e.g., adb, qoala, both, none)'
         required: true
         default: 'none'
-        type: choice
-        options:
-          - b1
-          - b2
-          - both
-          - none
       consumers:
         description: 'Select Consumers (e.g., b1c1, b2c1, both, none)'
         required: true
         default: 'none'
-        type: choice
-        options:
-          - b1 c1
-          - b2 c1
-          - both
-          - none
+      branch:
+        description: 'Specify the branch (e.g., main, develop, etc.)'
+        required: true
+        default: 'main'
 
 jobs:
   parse-and-trigger:
@@ -42,6 +34,7 @@ jobs:
         run: |
           echo "${{ github.event.inputs.bu }}" > selected_bu.txt
           echo "${{ github.event.inputs.consumers }}" > selected_consumers.txt
+          echo "${{ github.event.inputs.branch }}" > selected_branch.txt
 
       - name: Trigger Workflows Based on Selection
         uses: actions/github-script@v6
@@ -50,9 +43,10 @@ jobs:
           script: |
             const fs = require('fs');
 
-            // Read the selected BU and Consumers from input
+            // Read the selected BU, Consumers, and Branch from input
             const selectedBu = fs.readFileSync('selected_bu.txt', 'utf8').trim();
             const selectedConsumers = fs.readFileSync('selected_consumers.txt', 'utf8').trim();
+            const selectedBranch = fs.readFileSync('selected_branch.txt', 'utf8').trim();
 
             // Read workflow mappings
             const mappings = {};
@@ -85,17 +79,20 @@ jobs:
             console.log('Workflows to Trigger:', workflowsToTrigger);
 
             // Trigger workflows in parallel
-            const branch = 'main'; // Adjust this if branch input is needed
             const promises = workflowsToTrigger.map(workflowFile => {
-              console.log(`Triggering workflow: ${workflowFile}`);
+              console.log(`Triggering workflow: ${workflowFile} on branch: ${selectedBranch}`);
               return github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
                 workflow_id: workflowFile,
-                ref: branch,
+                ref: selectedBranch, // Use the selected branch from input
               });
             });
 
             // Wait for all workflows to be dispatched
             await Promise.all(promises);
             console.log('All workflows triggered successfully.');
+        env:
+          INPUT_BU: ${{ github.event.inputs.bu }}
+          INPUT_CONSUMERS: ${{ github.event.inputs.consumers }}
+          INPUT_BRANCH: ${{ github.event.inputs.branch }}
