@@ -1,4 +1,4 @@
-name: Dynamic Consumer Trigger Workflow
+name: master workflow
 
 on:
   workflow_dispatch:
@@ -35,11 +35,16 @@ jobs:
       - name: Define Workflow Mapping
         id: define-mapping
         run: |
-          # Define mappings for BUs and their workflows
-          echo "b1=b1-s1.yaml" >> mapping.txt
-          echo "b1 c1=b1-c1.yaml" >> mapping.txt
-          echo "b2=b2-s1.yaml" >> mapping.txt
-          echo "b2 c1=b2-c1.yaml" >> mapping.txt
+          echo "b1=b1-s1" >> mapping.txt
+          echo "b1 c1=b1-c1" >> mapping.txt
+          echo "b2=b2-s1" >> mapping.txt
+          echo "b2 c1=b2-c1" >> mapping.txt
+
+      - name: Debug Inputs
+        run: |
+          echo "BU: ${{ github.event.inputs.bu }}"
+          echo "Consumers: ${{ github.event.inputs.consumers }}"
+          echo "Branch: ${{ github.event.inputs.branch }}"
 
       - name: Save Selected BU and Consumers
         id: save-inputs
@@ -68,6 +73,11 @@ jobs:
               mappings[key.trim()] = value.trim();
             });
 
+            console.log('Mappings:', mappings);
+            console.log('Selected BU:', selectedBu);
+            console.log('Selected Consumers:', selectedConsumers);
+            console.log('Selected Branch:', selectedBranch);
+
             // Define workflows to trigger based on inputs
             const workflowsToTrigger = [];
 
@@ -87,7 +97,6 @@ jobs:
               workflowsToTrigger.push(mappings['b2 c1']);
             }
 
-            // Log workflows to trigger
             console.log('Workflows to Trigger:', workflowsToTrigger);
 
             // Trigger workflows in parallel
@@ -96,15 +105,11 @@ jobs:
               return github.rest.actions.createWorkflowDispatch({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                workflow_id: workflowFile,
-                ref: selectedBranch, // Use the selected branch from input
+                workflow_id: workflowFile,  // e.g., 'b1-s1' (without .yaml extension)
+                ref: selectedBranch,        // e.g., 'main'
               });
             });
 
             // Wait for all workflows to be dispatched
             await Promise.all(promises);
             console.log('All workflows triggered successfully.');
-        env:
-          INPUT_BU: ${{ github.event.inputs.bu }}
-          INPUT_CONSUMERS: ${{ github.event.inputs.consumers }}
-          INPUT_BRANCH: ${{ github.event.inputs.branch }}
