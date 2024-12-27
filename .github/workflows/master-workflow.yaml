@@ -17,8 +17,8 @@ on:
         description: 'Select Consumers (e.g., b1c1, b2c1, both, none)'
         type: choice
         options:
-          - b1c1
-          - b2c1
+          - b1 c1
+          - b2 c1
           - both
           - none
         required: true
@@ -37,8 +37,8 @@ jobs:
         run: |
           echo "b1=b1-s1.yml" >> mapping.txt
           echo "b2=b2-s1.yml" >> mapping.txt
-          echo "b1c1=b1-c1.yml" >> mapping.txt
-          echo "b2c1=b2-c1.yml" >> mapping.txt
+          echo "b1 c1=b1-c1.yml" >> mapping.txt
+          echo "b2 c1=b2-c1.yml" >> mapping.txt
 
       - name: Debug Inputs
         run: |
@@ -68,12 +68,12 @@ jobs:
           fi
 
           # Add Consumer workflows
-          if [ "${{ github.event.inputs.consumers }}" == "b1c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b1c1")
+          if [ "${{ github.event.inputs.consumers }}" == "b1 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
+            workflows_to_trigger+=("b1 c1")
           fi
 
-          if [ "${{ github.event.inputs.consumers }}" == "b2c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b2c1")
+          if [ "${{ github.event.inputs.consumers }}" == "b2 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
+            workflows_to_trigger+=("b2 c1")
           fi
 
           # Trigger each selected workflow
