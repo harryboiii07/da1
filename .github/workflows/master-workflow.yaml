@@ -17,12 +17,13 @@ jobs:
       - name: Trigger Repository Dispatch
         uses: actions/github-script@v6
         with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const branchName = inputs.branch_name || "dev";
-            github.rest.repos.createDispatchEvent({
+            const branchName = "${{ inputs.branch_name }}" || "dev";
+            await github.rest.repos.createDispatchEvent({
               owner: context.repo.owner,
               repo: context.repo.repo,
-              event_type: "b1", // Must match the event type in [DEV] Deploy App workflow
+              event_type: "b1", // Must match the event type in the target workflow
               client_payload: {
                 branch: branchName
               }
