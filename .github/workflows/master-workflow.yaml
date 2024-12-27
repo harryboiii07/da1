@@ -69,11 +69,11 @@ jobs:
 
           # Add Consumer workflows
           if [ "${{ github.event.inputs.consumers }}" == "b1 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b1 c1")
+            workflows_to_trigger+=("b1c1")
           fi
 
           if [ "${{ github.event.inputs.consumers }}" == "b2 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b2 c1")
+            workflows_to_trigger+=("b2c1")
           fi
 
           # Trigger each selected workflow
