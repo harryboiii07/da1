@@ -4,7 +4,7 @@ name: Deploy to S3 and CloudFront
 on:
   repository_dispatch:
     types:
-      - b1c2 
+      - b1 c2 
   push:
     branches:
       - main  # Trigger on changes to the main branch

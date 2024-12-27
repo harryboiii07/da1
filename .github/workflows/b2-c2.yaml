@@ -7,7 +7,7 @@ on:
       - main  # Trigger on changes to the main branch
   repository_dispatch:
     types:
-      - b2c2 
+      - b2 c2 
 
 jobs:
   deploy:
