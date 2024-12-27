@@ -39,43 +39,35 @@ jobs:
           echo "b2=b2-s1.yml" >> mapping.txt
           echo "b1 c1=b1-c1.yml" >> mapping.txt
           echo "b2 c1=b2-c1.yml" >> mapping.txt
-
       - name: Debug Inputs
         run: |
           echo "BU: ${{ github.event.inputs.bu }}"
           echo "Consumers: ${{ github.event.inputs.consumers }}"
           echo "Branch: ${{ github.event.inputs.branch }}"
-
       - name: Save Selected BU and Consumers
         id: save-inputs
         run: |
           echo "${{ github.event.inputs.bu }}" > selected_bu.txt
           echo "${{ github.event.inputs.consumers }}" > selected_consumers.txt
           echo "${{ github.event.inputs.branch }}" > selected_branch.txt
-
       - name: Trigger Child Workflows Based on Selection
         run: |
           # Create a list of workflows to trigger based on the inputs
           workflows_to_trigger=()
-
           # Add BU workflows
           if [ "${{ github.event.inputs.bu }}" == "b1" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
             workflows_to_trigger+=("b1")
           fi
-
           if [ "${{ github.event.inputs.bu }}" == "b2" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
             workflows_to_trigger+=("b2")
           fi
-
           # Add Consumer workflows
           if [ "${{ github.event.inputs.consumers }}" == "b1 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
             workflows_to_trigger+=("b1c1")
           fi
-
           if [ "${{ github.event.inputs.consumers }}" == "b2 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
             workflows_to_trigger+=("b2c1")
           fi
-
           # Trigger each selected workflow
           for workflow in "${workflows_to_trigger[@]}"; do
             echo "Triggering workflow: $workflow"
