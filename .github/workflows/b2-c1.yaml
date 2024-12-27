@@ -2,7 +2,9 @@
 name: Deploy to S3 and CloudFront
 
 on:
-  workflow_dispatch:
+  repository_dispatch:
+    types:
+      - b2c1 
   push:
     branches:
       - main  # Trigger on changes to the main branch

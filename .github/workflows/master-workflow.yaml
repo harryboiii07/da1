@@ -1,4 +1,4 @@
-name: master workflow
+name: Master Workflow
 
 on:
   workflow_dispatch:
@@ -7,8 +7,8 @@ on:
         description: 'Select BU (e.g., adb, qoala, both, none)'
         type: choice
         options:
-          - adb
-          - qoala
+          - b1
+          - b2
           - both
           - none
         required: true
@@ -35,10 +35,10 @@ jobs:
       - name: Define Workflow Mapping
         id: define-mapping
         run: |
-          echo "b1=b1-s1" >> mapping.txt
-          echo "b1 c1=b1-c1" >> mapping.txt
-          echo "b2=b2-s1" >> mapping.txt
-          echo "b2 c1=b2-c1" >> mapping.txt
+          echo "b1=b1-s1.yml" >> mapping.txt
+          echo "b2=b2-s1.yml" >> mapping.txt
+          echo "b1c1=b1-c1.yml" >> mapping.txt
+          echo "b2c1=b2-c1.yml" >> mapping.txt
 
       - name: Debug Inputs
         run: |
@@ -53,63 +53,35 @@ jobs:
           echo "${{ github.event.inputs.consumers }}" > selected_consumers.txt
           echo "${{ github.event.inputs.branch }}" > selected_branch.txt
 
-      - name: Trigger Workflows Based on Selection
-        uses: actions/github-script@v6
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            const fs = require('fs');
+      - name: Trigger Child Workflows Based on Selection
+        run: |
+          # Create a list of workflows to trigger based on the inputs
+          workflows_to_trigger=()
 
-            // Read the selected BU, Consumers, and Branch from input
-            const selectedBu = fs.readFileSync('selected_bu.txt', 'utf8').trim();
-            const selectedConsumers = fs.readFileSync('selected_consumers.txt', 'utf8').trim();
-            const selectedBranch = fs.readFileSync('selected_branch.txt', 'utf8').trim();
+          # Add BU workflows
+          if [ "${{ github.event.inputs.bu }}" == "b1" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
+            workflows_to_trigger+=("b1")
+          fi
 
-            // Read workflow mappings
-            const mappings = {};
-            const mappingLines = fs.readFileSync('mapping.txt', 'utf8').split('\n').filter(line => line.trim());
-            mappingLines.forEach(line => {
-              const [key, value] = line.split('=');
-              mappings[key.trim()] = value.trim();
-            });
+          if [ "${{ github.event.inputs.bu }}" == "b2" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
+            workflows_to_trigger+=("b2")
+          fi
 
-            console.log('Mappings:', mappings);
-            console.log('Selected BU:', selectedBu);
-            console.log('Selected Consumers:', selectedConsumers);
-            console.log('Selected Branch:', selectedBranch);
+          # Add Consumer workflows
+          if [ "${{ github.event.inputs.consumers }}" == "b1c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
+            workflows_to_trigger+=("b1c1")
+          fi
 
-            // Define workflows to trigger based on inputs
-            const workflowsToTrigger = [];
+          if [ "${{ github.event.inputs.consumers }}" == "b2c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
+            workflows_to_trigger+=("b2c1")
+          fi
 
-            // Handle BU workflows
-            if (selectedBu === 'b1' || selectedBu === 'both') {
-              workflowsToTrigger.push(mappings['b1']);
-            }
-            if (selectedBu === 'b2' || selectedBu === 'both') {
-              workflowsToTrigger.push(mappings['b2']);
-            }
-
-            // Handle Consumer workflows
-            if (selectedConsumers === 'b1 c1' || selectedConsumers === 'both') {
-              workflowsToTrigger.push(mappings['b1 c1']);
-            }
-            if (selectedConsumers === 'b2 c1' || selectedConsumers === 'both') {
-              workflowsToTrigger.push(mappings['b2 c1']);
-            }
-
-            console.log('Workflows to Trigger:', workflowsToTrigger);
-
-            // Trigger workflows in parallel
-            const promises = workflowsToTrigger.map(workflowFile => {
-              console.log(`Triggering workflow: ${workflowFile} on branch: ${selectedBranch}`);
-              return github.rest.actions.createWorkflowDispatch({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                workflow_id: workflowFile,  // e.g., 'b1-s1' (without .yaml extension)
-                ref: selectedBranch,        // e.g., 'main'
-              });
-            });
-
-            // Wait for all workflows to be dispatched
-            await Promise.all(promises);
-            console.log('All workflows triggered successfully.');
+          # Trigger each selected workflow
+          for workflow in "${workflows_to_trigger[@]}"; do
+            echo "Triggering workflow: $workflow"
+            curl -X POST \
+              -H "Accept: application/vnd.github.v3+json" \
+              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+              https://api.github.com/repos/${{ github.repository }}/dispatches \
+              -d '{"event_type": "'$workflow'"}'
+          done
