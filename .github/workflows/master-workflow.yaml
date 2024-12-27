@@ -70,10 +70,11 @@ jobs:
           fi
           # Trigger each selected workflow
           for workflow in "${workflows_to_trigger[@]}"; do
-            echo "Triggering workflow: $workflow"
-            curl -X POST \
-              -H "Accept: application/vnd.github.v3+json" \
-              -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-              https://api.github.com/repos/${{ github.repository }}/dispatches \
-              -d '{"event_type": "'$workflow'"}'
+           response=$(curl -X POST \
+            -H "Accept: application/vnd.github.v3+json" \
+            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
+            https://api.github.com/repos/${{ github.repository }}/dispatches \
+            -d '{"event_type": "'$workflow'"}')
+
+            echo "Response: $response"
           done
