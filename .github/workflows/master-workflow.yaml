@@ -1,80 +1,29 @@
-name: Master Workflow
+name: "Trigger Dev Deploy Workflow"
 
 on:
   workflow_dispatch:
     inputs:
-      bu:
-        description: 'Select BU (e.g., adb, qoala, both, none)'
-        type: choice
-        options:
-          - b1
-          - b2
-          - both
-          - none
-        required: true
-        default: 'none'
-      consumers:
-        description: 'Select Consumers (e.g., b1c1, b2c1, both, none)'
-        type: choice
-        options:
-          - b1 c1
-          - b2 c1
-          - both
-          - none
-        required: true
-        default: 'none'
-      branch:
-        description: 'Specify the branch (e.g., main, develop, etc.)'
-        required: true
-        default: 'main'
+      branch_name:
+        description: "Branch to trigger the deployment (default: dev)"
+        default: "dev"
+        required: false
 
 jobs:
-  parse-and-trigger:
+  trigger_dev_deploy:
+    name: Trigger [DEV] Deploy Workflow
     runs-on: ubuntu-latest
-    steps:
-      - name: Define Workflow Mapping
-        id: define-mapping
-        run: |
-          echo "b1=b1-s1.yml" >> mapping.txt
-          echo "b2=b2-s1.yml" >> mapping.txt
-          echo "b1 c1=b1-c1.yml" >> mapping.txt
-          echo "b2 c1=b2-c1.yml" >> mapping.txt
-      - name: Debug Inputs
-        run: |
-          echo "BU: ${{ github.event.inputs.bu }}"
-          echo "Consumers: ${{ github.event.inputs.consumers }}"
-          echo "Branch: ${{ github.event.inputs.branch }}"
-      - name: Save Selected BU and Consumers
-        id: save-inputs
-        run: |
-          echo "${{ github.event.inputs.bu }}" > selected_bu.txt
-          echo "${{ github.event.inputs.consumers }}" > selected_consumers.txt
-          echo "${{ github.event.inputs.branch }}" > selected_branch.txt
-      - name: Trigger Child Workflows Based on Selection
-        run: |
-          # Create a list of workflows to trigger based on the inputs
-          workflows_to_trigger=()
-          # Add BU workflows
-          if [ "${{ github.event.inputs.bu }}" == "b1" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
-            workflows_to_trigger+=("b1")
-          fi
-          if [ "${{ github.event.inputs.bu }}" == "b2" ] || [ "${{ github.event.inputs.bu }}" == "both" ]; then
-            workflows_to_trigger+=("b2")
-          fi
-          # Add Consumer workflows
-          if [ "${{ github.event.inputs.consumers }}" == "b1 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b1c1")
-          fi
-          if [ "${{ github.event.inputs.consumers }}" == "b2 c1" ] || [ "${{ github.event.inputs.consumers }}" == "both" ]; then
-            workflows_to_trigger+=("b2c1")
-          fi
-          # Trigger each selected workflow
-          for workflow in "${workflows_to_trigger[@]}"; do
-           response=$(curl -X POST \
-            -H "Accept: application/vnd.github.v3+json" \
-            -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" \
-            https://api.github.com/repos/${{ github.repository }}/dispatches \
-            -d '{"event_type": "'$workflow'"}')
 
-            echo "Response: $response"
-          done
+    steps:
+      - name: Trigger Repository Dispatch
+        uses: actions/github-script@v6
+        with:
+          script: |
+            const branchName = inputs.branch_name || "dev";
+            github.rest.repos.createDispatchEvent({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              event_type: "b1", // Must match the event type in [DEV] Deploy App workflow
+              client_payload: {
+                branch: branchName
+              }
+            });
