@@ -22,10 +22,9 @@ jobs:
             const response = await github.rest.repos.createDispatchEvent({
                   owner: context.repo.owner,
                   repo: context.repo.repo,
-                  event_type: "b1",
+                  event_type: workflow,
                   client_payload: {
                     branch: "${{ github.event.inputs.branch_name }}"
                   }
                 });
-                console.log(`Successfully triggered workflow: b1 . Response status: ${response.status}`);
-            });
+                console.log(`Successfully triggered workflow: ${workflow}. Response status: ${response.status}`);
