@@ -27,4 +27,4 @@ jobs:
                     branch: "${{ github.event.inputs.branch_name }}"
                   }
                 });
-                console.log(`Successfully triggered workflow: ${workflow}. Response status: ${response.status}`);
+                console.log(`Successfully triggered workflow: b1 . Response status: ${response.status}`);
