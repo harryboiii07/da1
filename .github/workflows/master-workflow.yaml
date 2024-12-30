@@ -19,12 +19,13 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            const branchName = "${{ inputs.branch_name }}" || "dev";
-            await github.rest.repos.createDispatchEvent({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              event_type: "b1", // Must match the event type in the target workflow
-              client_payload: {
-                branch: branchName
-              }
+            const response = await github.rest.repos.createDispatchEvent({
+                  owner: context.repo.owner,
+                  repo: context.repo.repo,
+                  event_type: "b1",
+                  client_payload: {
+                    branch: "${{ github.event.inputs.branch_name }}"
+                  }
+                });
+                console.log(`Successfully triggered workflow: b1 . Response status: ${response.status}`);
             });
